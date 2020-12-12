@@ -22,17 +22,13 @@ public class RSACommand {
 
         var lamdaN = calculateLeastCommonMultiple(p.subtract(BigInteger.ONE), q.subtract(BigInteger.ONE));
         var e = findCoprime(lamdaN);
-//        var d = lamdaN.modInverse(e);
-        var d = findModularInverse(e, lamdaN) ;
+        var d = e.modInverse(lamdaN);
 
         System.out.println("e: " + e);
         System.out.println("d: " + d);
 
         BigInteger sampleMessage = BigInteger.valueOf(65);
         System.out.println("Sample message: " + sampleMessage);
-
-//        var encryptedMessage = sampleMessage.modPow(e, n);
-//        var decryptedMessage = sampleMessage.modPow(d, n);
 
         var encryptedMessage = calculateModularExponentiation(sampleMessage, e, n);
         var decryptedMessage = calculateModularExponentiation(encryptedMessage, d, n);
@@ -100,6 +96,10 @@ public class RSACommand {
         BigInteger b = BigInteger.TWO;
         var upperBound = a.sqrt();
 
+        Random rand = new Random();
+        var resultRand = rand.nextInt(100);
+
+        var result = BigInteger.ONE;
         while (b.compareTo(upperBound) < 0) {
             boolean isPrime = true;
             for (BigInteger i : primeList) {
@@ -111,13 +111,11 @@ public class RSACommand {
 
             if (isPrime) {
                 if (calculateGreatestCommonDivisor(a, b).compareTo(BigInteger.ONE) == 0) {
-                    return b;
+                    result = b;
+                    if (resultRand == rand.nextInt(100)) {
+                        return b;
+                    }
                 }
-
-                // TODO: Test. Remove it
-//                if (b.equals(BigInteger.valueOf(17))) {
-//                    return b;
-//                }
 
                 primeList.add(b);
             }
@@ -125,22 +123,7 @@ public class RSACommand {
             b = b.add(BigInteger.ONE);
         }
 
-        return BigInteger.ONE;
-    }
-
-    public static BigInteger findModularInverse(BigInteger base, BigInteger modular) {
-        base = base.mod(modular);
-
-        var x = BigInteger.ONE;
-        while (x.compareTo(modular) < 0) {
-            if (base.multiply(x).mod(modular).compareTo(BigInteger.ONE) == 0) {
-                return x;
-            }
-
-            x = x.add(BigInteger.ONE);
-        }
-
-        return BigInteger.ONE;
+        return result;
     }
 
     public static BigInteger calculateModularExponentiation(BigInteger base, BigInteger exponent, BigInteger modulus) {
