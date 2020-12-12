@@ -1,23 +1,34 @@
 package edu.hcmut;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 public class RSACommand {
     public static void main(String[] args) {
-        long p = generateRandomPrimeNumber();
-        long q = generateRandomPrimeNumber();
+//        BigInteger p = generateRandomPrimeNumber();
+//        BigInteger q = generateRandomPrimeNumber();
+        BigInteger q = BigInteger.valueOf(61);
+        BigInteger p = BigInteger.valueOf(53);
         System.out.println("p: " + p);
         System.out.println("q: " + q);
 
-        long n = p * q;
+        BigInteger n = p.multiply(q);
 
-        var lamdaN = calculateLeastCommonMultiple(p - 1, q - 1);
+        var lamdaN = calculateLeastCommonMultiple(p.subtract(BigInteger.ONE), q.subtract(BigInteger.ONE));
         var e = findCoprime(lamdaN);
-        var d = findModularInverse(e, lamdaN);
+//        var d = lamdaN.modInverse(e);
+        var d = findModularInverse(e, lamdaN) ;
 
-        long sampleMessage = 65;
+        System.out.println("e: " + e);
+        System.out.println("d: " + d);
+
+        BigInteger sampleMessage = BigInteger.valueOf(65);
+
+//        var encryptedMessage = sampleMessage.modPow(e, n);
+//        var decryptedMessage = sampleMessage.modPow(d, n);
+
         var encryptedMessage = calculateModularExponentiation(sampleMessage, e, n);
         var decryptedMessage = calculateModularExponentiation(encryptedMessage, d, n);
 
@@ -25,9 +36,9 @@ public class RSACommand {
         System.out.println("Decrypted message: " + decryptedMessage);
     }
 
-    public static long calculateGreatestCommonDivisor(long a, long b) {
-        while (b > 0) {
-            long temp = a % b;
+    public static BigInteger calculateGreatestCommonDivisor(BigInteger a, BigInteger b) {
+        while (b.compareTo(BigInteger.ZERO) > 0) {
+            BigInteger temp = a.mod(b);
             a = b;
             b = temp;
         }
@@ -35,27 +46,30 @@ public class RSACommand {
         return a;
     }
 
-    public static long calculateLeastCommonMultiple(long a, long b) {
-        if (a == 0 && b == 0) {
-            return 0;
+    public static BigInteger calculateLeastCommonMultiple(BigInteger a, BigInteger b) {
+        if (BigInteger.ZERO.equals(a) && BigInteger.ZERO.equals(b)) {
+            return BigInteger.ZERO;
         }
 
-        long gcd = calculateGreatestCommonDivisor(a, b);
-        return (a / gcd) * b;
+        BigInteger gcd = calculateGreatestCommonDivisor(a, b);
+        return a.divide(gcd).multiply(b);
     }
 
-    public static long generateRandomPrimeNumber() {
-        List<Long> primeList = new ArrayList<>();
+    public static BigInteger generateRandomPrimeNumber() {
+        List<BigInteger> primeList = new ArrayList<>();
 
         Random rand = new Random();
         var resultRand = rand.nextInt(1000);
 
-        long b = 2;
-        double upperBound = Math.sqrt(Long.MAX_VALUE);
-        while (b < upperBound) {
+        BigInteger b = BigInteger.TWO;
+
+        // TODO: change it
+        BigInteger upperBound = BigInteger.valueOf(Long.MAX_VALUE);
+
+        while (b.compareTo(upperBound) < 0) {
             boolean isPrime = true;
-            for (long i : primeList) {
-                if (b % i == 0) {
+            for (BigInteger i : primeList) {
+                if (b.mod(i) == BigInteger.ZERO) {
                     isPrime = false;
                     break;
                 }
@@ -69,21 +83,22 @@ public class RSACommand {
                 primeList.add(b);
             }
 
-            b++;
+            b = b.add(BigInteger.ONE);
         }
 
         return primeList.get(primeList.size() - 1);
     }
 
-    public static long findCoprime(long a) {
-        List<Long> primeList = new ArrayList<>();
+    public static BigInteger findCoprime(BigInteger a) {
+        List<BigInteger> primeList = new ArrayList<>();
 
-        long b = 2;
-        double upperBound = Math.sqrt(a);
-        while (b < upperBound) {
+        BigInteger b = BigInteger.TWO;
+        var upperBound = a.sqrt();
+
+        while (b.compareTo(upperBound) < 0) {
             boolean isPrime = true;
-            for (long i : primeList) {
-                if (b % i == 0) {
+            for (BigInteger i : primeList) {
+                if (b.mod(i) == BigInteger.TWO) {
                     isPrime = false;
                     break;
                 }
@@ -94,27 +109,32 @@ public class RSACommand {
 //                return b;
 //            }
                 // TODO: Test. Remove it
-                if (b == 17) {
+                if (b.equals(BigInteger.valueOf(17))) {
                     return b;
                 }
 
                 primeList.add(b);
             }
-            b++;
+
+            b = b.add(BigInteger.ONE);
         }
 
-        return 1;
+        return BigInteger.ONE;
     }
 
-    public static long findModularInverse(long base, long modules) {
-        base = base % modules;
-        for (long x = 1; x < modules; x++) {
-            if ((base * x) % modules == 1) {
+    public static BigInteger findModularInverse(BigInteger base, BigInteger modular) {
+        base = base.mod(modular);
+
+        var x = BigInteger.ONE;
+        while (x.compareTo(modular) < 0) {
+            if (base.multiply(x).mod(modular).compareTo(BigInteger.ONE) == 0) {
                 return x;
             }
+
+            x = x.add(BigInteger.ONE);
         }
 
-        return 1;
+        return BigInteger.ONE;
     }
 
     public static long calculateModularExponentiationBase(long base, long exponent, long modulus) {
@@ -126,20 +146,20 @@ public class RSACommand {
         return result;
     }
 
-    public static long calculateModularExponentiation(long base, long exponent, long modulus) {
-        if (modulus == 1) {
-            return 0;
+    public static BigInteger calculateModularExponentiation(BigInteger base, BigInteger exponent, BigInteger modulus) {
+        if (BigInteger.ONE.equals(modulus)) {
+            return BigInteger.ONE;
         }
 
-        long result = 1;
-        base = base % modulus;
-        while (exponent > 0) {
-            if (exponent % 2 == 1) {
-                result = (result * base) % modulus;
+        var result = BigInteger.ONE;
+        base = base.mod(modulus);
+        while (exponent.compareTo(BigInteger.ONE) > 0) {
+            if (exponent.mod(BigInteger.TWO).compareTo(BigInteger.ONE) > 0) {
+                result = result.multiply(base).mod(modulus);
             }
 
-            exponent = exponent >> 1;
-            base = (base * base) % modulus;
+            exponent = exponent.shiftRight(1);
+            base = base.multiply(base).mod(modulus);
         }
 
         return result;
